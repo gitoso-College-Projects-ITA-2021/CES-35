@@ -1,3 +1,21 @@
+/* =====================================================================================
+(CES-35): Laboratório II - Implementação de Sockets
+
+Grupo:
+- Adrisson Rogério Samersla
+- Gianluigi Dal Toso
+- Lucas Alberto Bilobran Lema
+----------------------------------------------------------------------------------------
+TODO:
+    - [ ] Server Multithreaded
+    - [ ] Quebrar o arquivo em chunks para o envio se for muito grande
+    - [ ] Tratar e devolver códigos de erro
+    - [ ] Impedir PATH Traversal
+    - [ ] Setar os tamanhos dos buffers e arrays
+    - [x] Na requisição do '/' devolver `index.html` por padrão
+======================================================================================*/
+
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -71,7 +89,7 @@ int main(int argc, char *argv[]) {
     // Print Header in StdOut =====================================================================
     print_header(arg_host, ipstr, arg_port, arg_dir);
 
-    // [ ] TODO: Aceita uma solicitação HTTP ======================================================
+    // Aceita uma solicitação TCP  ================================================================
     // cria um socket para IPv4 e usando protocolo de transporte TCP
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -125,7 +143,9 @@ int main(int argc, char *argv[]) {
     
     // Receber e processar a requisição HTTP
     // COMMENTS: Fazer como se fosse via HTTP 1.0, um socket por objeto ===============================
-    while (true) {
+    bool isEnd = false;
+    while (!isEnd) {
+        int httpStatusCode = 200; // Será modificado se der algum erro no caminho
         int clientSockfd = accept(sockfd, (struct sockaddr*)&clientAddr, &clientAddrSize);
 
         if (clientSockfd == -1) {
@@ -138,7 +158,6 @@ int main(int argc, char *argv[]) {
 
         // faz leitura e escrita dos dados da conexao
         // utiliza um buffer de BUFFER_SIZE bytes (char)
-        bool isEnd = false;
         char buf[BUFFER_SIZE + 1] = {0};
 
         
@@ -151,79 +170,90 @@ int main(int argc, char *argv[]) {
             return 5;
         }
 
-        // [+/-] TODO: Parse de HTTP ====================================================================
+        // Imprime o que foi recebido na tela do servidor
+        std::stringstream ss;
+
+        std::cout << "======= Received Request ==========" << std::endl;
+        ss << buf << std::endl;
+        std::cout << buf << std::endl;
+
+        // Parse de HTTP ==============================================================================
         //     HTTP válido: 
-        //         GET /[path]/[filename] HTTP/1.1
+        //         GET /[path]/[filename] HTTP/1.0
         //
-        //     !!! Verificar se o protocolo é só isso mesmo !!!
+        //     Estamos ignorando quaisquer headers de protocolo por enquanto
         char filename[200];
-        char complete_filename[300] = "\0";
-        char http_version[5];
-        if (sscanf(buf, "GET /%s HTTP/%s\n %*s", filename, http_version) == 2) {
-            printf("Filename: %s\nVersion: %s\n", filename, http_version);
+        char completeFilename[300] = "\0";
+        char httpVersion[5];
+        if (sscanf(buf, "GET %s HTTP/%s\n %*s", filename, httpVersion) != 2) {
+            httpStatusCode = 400; // Bad Request
+        } else if (filename[0] != '/') {
+            httpStatusCode = 400; // Bad Request
         }
-        else {
-            printf("ERROR\n");
-        }
+        
+        // [ ] TODO: Impedir path traversal ===============================================================
+        // Tenta localizar o arquivo
+        FILE *localFile;
+        if (httpStatusCode == 200) {
+            strcat(completeFilename, arg_dir);
+            if (strlen(filename) == 1) {
+                // filename == '/'
+                strcat(completeFilename, "/index.html");
+            }
+            else {
+                strcat(completeFilename, filename);
+            }
 
-        // [ ] TODO: Impedir path traversal
-        strcat(complete_filename, arg_dir);
-        strcat(complete_filename, "/");
-        strcat(complete_filename, filename);
-        printf("Complete filename: %s\n", complete_filename);
+            // Procura o arquivo solicitado ===============================================================
+            localFile = fopen(completeFilename, "r");
 
-        // [x] TODO: Procura o arquivo solicitado =====================================================
-        FILE *local_file;
-        local_file = fopen(complete_filename, "r");
-
-        if (local_file == NULL) {
-            // Tratar erros (404)
-            printf("ARQUIVO NÃO ENCONTRADO: %s", complete_filename);
+            if (localFile == NULL) {
+                httpStatusCode = 404; // Not Found
+            }
         }
 
         // Código retirado da internet - Fonte: https://stackoverflow.com/questions/2029103/correct-way-to-read-a-text-file-into-a-buffer-in-c
-        char source[BUFFER_SIZE + 1];
-        
+        // Cria a mensagem de retorno ======================================================================
+        char response[BUFFER_SIZE + 1];
+        char fileContents[200];
+
         // Criar uma resposta
         // [ ] TODO: Quebrar o arquivo em chunks
-        
-        /* Seek to the beginning of the file */
-        fseek(local_file, 0, SEEK_END);
-        long lSize = ftell(local_file);
-        rewind(local_file);
 
-        /* Read data */
-        char file_contents[200];
-        fread(file_contents, 1, lSize, local_file);
-        fclose(local_file);
-       
-        char response_str[BUFFER_SIZE + 1];
-        sprintf(response_str, "HTTP/1.0 200 OK\nContent-Lenght: %d\n\n\n", http_version, lSize);
-        printf("%s\n\n", response_str);
+        switch (httpStatusCode) {
+            case 404:
+                sprintf(response, "HTTP/1.0 %d %s\n", httpStatusCode, "Not Found");
+                printf("Responding with Header:\n%s", response);
+            break;
 
+            case 400:
+                sprintf(response, "HTTP/1.0 %d %s\n", httpStatusCode, "Bad Request");
+                printf("Responding with Header:\n%s", response);
+            break;
 
-        /* Concatenate file contents and Responde headers */
-        strcat(response_str, file_contents);
+            case 200:
+                // Calcula o tamanho do conteúdo do arquivo e põe no header
 
-        // [ ] TODO: Retorna o conteúdo (se existir) ==================================================
-        
-        // [ ] TODO: Caso contrário responder com o código apropriado (404) ===========================
+                /* Seek to the beginning of the file */
+                fseek(localFile, 0, SEEK_END);
+                long lSize = ftell(localFile);
+                rewind(localFile);
 
-        // Imprime o valor recebido no servidor antes de reenviar
-        // para o cliente de volta
-        // ss << buf << std::endl;
-        // std::cout << buf << std::endl;
+                /* Read data */
+                fread(fileContents, 1, lSize, localFile);
+                fclose(localFile);
+            
+                //sprintf(response, "HTTP/1.0 %d %s\nContent-Lenght: %d\n\n", httpStatusCode, "OK", lSize - 1);
+                sprintf(response, "HTTP/1.0 %d %s\n\n", httpStatusCode, "OK");
+                printf("===== Responding with Header: =====\n%s", response);
 
-        // envia de volta o buffer recebido como um echo
-        // if (send(clientSockfd, buf, BUFFER_SIZE, 0) == -1) {
-        // perror("send");
-        // return 6;
-        // }
+                /* Concatenate file contents and Responde headers */
+                strcat(response, fileContents);
+            break;
+        }
 
-        //printf("Mensagem: \n%s\n\n", response_str);
-
-        // Envia o conteúdo do arquivo como resposta
-        if (send(clientSockfd, response_str, strlen(response_str), 0) == -1) {
+        // Envia a resposta para o cliente
+        if (send(clientSockfd, response, strlen(response), 0) == -1) {
             perror("send");
             return 6;
         }
