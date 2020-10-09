@@ -76,7 +76,7 @@ void MultithreadedServer::ServerJob (int jobId, int clientSockfd) {
 
     // faz leitura e escrita dos dados da conexao
     // utiliza um buffer de BUFFER_SIZE bytes (char)
-    char buf[BUFFER_SIZE + 1] = {0};
+    char buf[BUFFER_SIZE] = {0};
 
     // zera a memoria do buffer
     memset(buf, '\0', sizeof(buf));
@@ -110,7 +110,7 @@ void MultithreadedServer::ServerJob (int jobId, int clientSockfd) {
 
     // [ ] TODO: Impedir path traversal ===============================================================
     // Tenta localizar o arquivo
-    FILE *localFile;
+    std::ifstream localFile;
     if (httpStatusCode == 200) {
         strcat(completeFilename, this->dir.c_str());
         if (strlen(filename) == 1) {
@@ -122,17 +122,16 @@ void MultithreadedServer::ServerJob (int jobId, int clientSockfd) {
         }
 
         // Procura o arquivo solicitado ===============================================================
-        localFile = fopen(completeFilename, "r");
+        localFile.open(completeFilename, std::ios_base::in | std::ios_base::binary);
 
-        if (localFile == nullptr) {
+        if (!localFile.good()) {
             httpStatusCode = 404; // Not Found
         }
     }
 
     // Código retirado da internet - Fonte: https://stackoverflow.com/questions/2029103/correct-way-to-read-a-text-file-into-a-buffer-in-c
     // Cria a mensagem de retorno ======================================================================
-    char response[BUFFER_SIZE + 1];
-    char fileContents[200];
+    char response[BUFFER_SIZE];
 
     // Criar uma resposta
     // [ ] TODO: Quebrar o arquivo em chunks
@@ -141,38 +140,67 @@ void MultithreadedServer::ServerJob (int jobId, int clientSockfd) {
         case 404:
             sprintf(response, "HTTP/1.0 %d %s\n", httpStatusCode, "Not Found");
             printf("Responding with Header:\n%s", response);
+
+            // Envia a resposta para o cliente
+            if (send(clientSockfd, response, strlen(response), 0) == -1) {
+                perror("send");
+                exit(6);
+            }
             break;
 
         case 400:
             sprintf(response, "HTTP/1.0 %d %s\n", httpStatusCode, "Bad Request");
             printf("Responding with Header:\n%s", response);
+
+            // Envia a resposta para o cliente
+            if (send(clientSockfd, response, strlen(response), 0) == -1) {
+                perror("send");
+                exit(6);
+            }
             break;
 
         case 200:
-            // Calcula o tamanho do conteúdo do arquivo e põe no header
+            // get length of file:
+            localFile.seekg (0, localFile.end);
+            int length = localFile.tellg();
+            localFile.seekg (0, localFile.beg);
 
-            /* Seek to the beginning of the file */
-            fseek(localFile, 0, SEEK_END);
-            long lSize = ftell(localFile);
-            rewind(localFile);
+            sprintf(response, "HTTP/1.0 %d %s\r\nContent-Lenght: %d\r\n\r\n", httpStatusCode, "OK", length);
+            printf("===== Responding with Header: =====\n%s", response);
+            int lenTaken = strlen(response);
+            std::cout << "Len taken: " << lenTaken << std::endl;
 
             /* Read data */
-            fread(fileContents, 1, lSize, localFile);
-            fclose(localFile);
 
-            //sprintf(response, "HTTP/1.0 %d %s\nContent-Lenght: %d\n\n", httpStatusCode, "OK", lSize - 1);
-            sprintf(response, "HTTP/1.0 %d %s\n\n", httpStatusCode, "OK");
-            printf("===== Responding with Header: =====\n%s", response);
+            // reaproveita o buffer response e concatena no fim
+            // TODO: checar para ver se os limites dos buffers estão ok
+            localFile.read(&response[lenTaken], BUFFER_SIZE - lenTaken);
+            int quantRead = localFile.gcount();
 
-            /* Concatenate file contents and Responde headers */
-            strcat(response, fileContents);
+            // Envia a resposta para o cliente
+            int quantSend = send(clientSockfd, response, lenTaken + quantRead, 0);
+            std::cout << quantSend << std::endl;
+            if (quantSend == -1) {
+                perror("send");
+                exit(6);
+            }
+
+            while (quantSend < length) {
+                localFile.read(response, BUFFER_SIZE);
+                quantRead = localFile.gcount();
+
+                // Envia a resposta para o cliente
+                int len = send(clientSockfd, response, quantRead, 0);
+                if ( len == -1) {
+                    perror("send");
+                    exit(6);
+                }
+                std::cout << len << std::endl;
+                quantSend += len;
+            }
+
+            localFile.close();
             break;
-    }
-
-    // Envia a resposta para o cliente
-    if (send(clientSockfd, response, strlen(response), 0) == -1) {
-        perror("send");
-        exit(6);
     }
 
     // fecha o socket

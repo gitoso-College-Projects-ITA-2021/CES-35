@@ -33,8 +33,6 @@ TODO:
 
 #include "./MultithreadedServer.hpp"
 
-#define BUFFER_SIZE 1024
-
 
 void print_header(char*, char*, char*, char*);
 

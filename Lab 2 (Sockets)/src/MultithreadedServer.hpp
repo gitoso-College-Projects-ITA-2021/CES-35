@@ -6,11 +6,12 @@
 #include <netdb.h>
 
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <thread>
 
 
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 32768 // 32Kbytes
 
 class MultithreadedServer {
 public:
