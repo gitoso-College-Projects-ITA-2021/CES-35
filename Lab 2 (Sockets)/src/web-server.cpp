@@ -243,8 +243,8 @@ int main(int argc, char *argv[]) {
                 fread(fileContents, 1, lSize, localFile);
                 fclose(localFile);
             
-                //sprintf(response, "HTTP/1.0 %d %s\nContent-Lenght: %d\n\n", httpStatusCode, "OK", lSize - 1);
-                sprintf(response, "HTTP/1.0 %d %s\n\n", httpStatusCode, "OK");
+                sprintf(response, "HTTP/1.0 %d %s\r\nContent-Lenght: %d\r\n\r\n", httpStatusCode, "OK", lSize - 1);
+                //sprintf(response, "HTTP/1.0 %d %s\n\n", httpStatusCode, "OK");
                 printf("===== Responding with Header: =====\n%s", response);
 
                 /* Concatenate file contents and Responde headers */

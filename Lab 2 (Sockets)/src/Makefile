@@ -6,6 +6,8 @@ USERID=Adrisson_Gianluigi_LucasAlberto
 all: showip web-server
 showip:
 	$(CXX) -o $@ $^ $(CXXFLAGS) $@.cpp
+web-client: 
+	$(CXX) -o $@ $^ $(CXXFLAGS) $@.cpp
 web-server:
 	$(CXX) -o $@ $^ $(CXXFLAGS) $@.cpp
 clean:
