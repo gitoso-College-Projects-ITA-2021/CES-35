@@ -10,11 +10,13 @@
 
 #include <iostream>
 #include <sstream>
+#include <fstream>
+#include <vector>
 
 class HTTPReq {
 public:
-  char hostname[200];
   int port;
+  char hostname[200];
   char object[200];
   char method[20];
 
@@ -30,16 +32,6 @@ public:
     return std::string(method).append(" /").append(object).append(" HTTP/1.0");
   }
 
-  // a partir do request, colocar tudo em bytes
-  int encode() {
-    return 1;
-  }
-
-  // a partir de bytes, preencher a classe
-  void parse() {
-
-  }
-
 };
 
 int main(int argc, char *argv[]) {
@@ -50,21 +42,11 @@ int main(int argc, char *argv[]) {
     // Cria a URL
     request.setURL(argv[i]);
 
-    // transforma a url em bytes e manda
-    int bytecode = request.encode();
-
     // cria o socket TCP IP
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-
-    // atividade de preenchimento da estrutura de endereço IP
-    // e porta de conexão, precisa ser zerado o restante da estrutura
-    // struct sockaddr_in {
-    //  short            sin_family;   // e.g. AF_INET, AF_INET6
-    //  unsigned short   sin_port;     // e.g. htons(3490)
-    //  struct in_addr   sin_addr;     // see struct in_addr, below
-    //  char             sin_zero[8];  // zero this if you want to
-    // };
     
+
+    // =====================================================================================
     struct addrinfo hints;
     struct addrinfo* res;
     char ipstr[INET_ADDRSTRLEN] = {'\0'};
@@ -90,6 +72,7 @@ int main(int argc, char *argv[]) {
     }
 
     freeaddrinfo(res); // libera a memoria alocada dinamicamente para "res"
+    // =====================================================================================
 
     struct sockaddr_in serverAddr;
     serverAddr.sin_family = AF_INET;
@@ -115,13 +98,9 @@ int main(int argc, char *argv[]) {
 
     // trecho de código para leitura e envio de dados nessa conexao
     // buffer eh o buffer de dados a ser recebido no socket com 100 bytes
-    bool isEnd = false;
     char buf[1050] = {0};
-   
     std::stringstream ss;
     unsigned char header[2000] = {0};
-    char data[2000]   = {0};
-    char *token;
 
     // envia a msg
     request.setMethod("GET");
@@ -135,15 +114,13 @@ int main(int argc, char *argv[]) {
     // zera o buffer
     memset(buf, '\0', sizeof(buf));
 
-    // recebe no buffer uma certa quantidade de bytes ate 2000
-    if (recv(sockfd, buf, 200, 0) == -1) {
+    // recebe no buffer uma certa quantidade de bytes
+    if (recv(sockfd, buf, 1024, 0) == -1) {
       perror("recv");
       return 5;
     }
 
     ss << buf;
-
-    std::string linee;
     int responseStatus = 0;
 
     sscanf(buf, "HTTP/1.0 %d%*s", &responseStatus);
@@ -155,36 +132,51 @@ int main(int argc, char *argv[]) {
     {
       int conntentLenght = 0;
 
-      //take tamanho
+      //tamanho
       sscanf(buf, "HTTP/1.0 %d%*[^Content-Lenght:]Content-Lenght: %d%*s", &responseStatus, &conntentLenght);
       std::cout << "conntentLenght: " << conntentLenght << std::endl;
 
       std::string st = ss.str();
       std::string rest = st.substr(st.find("\r\n\r\n") + 4, st.size());
       //std::string rest = st.substr(st.find("\n\n") + 2, st.size());
+      std::cout << "st: " << st << std::endl;
+      std::cout << "opa: " << rest.size() << std::endl;
       int received = rest.size();
+      std::cout << "opa: " << received << std::endl;
+      std::vector<uint8_t> data(rest.begin(), rest.end());
+      
 
-      std::cout << "\nRecebido: \n" << rest;
-      std::cout << "\nsizerest: " << rest.size(); 
+      FILE * pFile;
+      pFile = fopen ("myfile","w+");
+      fwrite(&data[0], sizeof(data[0]), data.size(), pFile);
 
-      while(received <= conntentLenght){
+      std::ofstream outfile;
+      outfile.open("afile");
+      outfile << rest;
+
+      while(received < conntentLenght){
           // zera o buffer
           memset(buf, '\0', sizeof(buf));
           ss.str("");
 
-          // recebe no buffer uma certa quantidade de bytes ate 2000
-          if (recv(sockfd, buf, 200, 0) == -1) {
+          // recebe no buffer uma certa quantidade de bytes ate 1024
+          if (recv(sockfd, buf, 1024, 0) == -1) {
             perror("recv");
             return 5;
           }
           ss << buf;
-
           rest = ss.str();
-          std::cout << "\nRecebido: \n" << rest << "\n ";
-          std::cout << "\nsizerest: " << rest.size(); 
+          data = std::vector<uint8_t> (rest.begin(), rest.end());
+          //std::cout << "\nRecebido: \n" << rest << "\n ";
+          std::cout << "\nsizerest: " << rest.size()*2; 
+          //received += ss.tellg();
           received += rest.size();
+          fwrite(&data[0], sizeof(data[0]), data.size(), pFile);
+          outfile << buf;
           std::cout << "\nReceived until now: " << received; 
       }
+        outfile.close();
+        fclose (pFile);
       break;
     }
     default:
@@ -192,41 +184,6 @@ int main(int argc, char *argv[]) {
       break;
     }
     
-    // Keep printing tokens while one of the 
-    // delimiters present in str[]. 
-    /*while (token != NULL) 
-    { 
-        printf("opa%s\n", token); 
-        token = strtok(NULL, "\n\n"); 
-    } */
-
-
-    /*while (!isEnd) {
-      // zera o buffer
-      memset(buf, '\0', sizeof(buf));
-
-      // recebe no buffer uma certa quantidade de bytes ate 2000
-      if (recv(sockfd, buf, 2000, 0) == -1) {
-        perror("recv");
-        return 5;
-      }
-
-      // coloca o conteudo do buffer na string
-      // imprime o buffer na tela
-      ss << buf << std::endl;
-      std::cout << "echo: ";
-      std::cout << buf << std::endl;
-
-
-
-      // se a string tiver o valor close, sair do loop de eco
-      if (ss.str() == "close\n")
-        break;
-
-      // zera a string ss
-      ss.str("");
-    }*/
-
     // fecha o socket
     close(sockfd);
 

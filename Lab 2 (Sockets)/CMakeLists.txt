@@ -1,5 +1,5 @@
 # setting minimum version
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.10)
 
 # setting project's name
 project(ces35_lab02)
