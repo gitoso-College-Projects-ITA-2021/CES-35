@@ -13,6 +13,8 @@
 #include <fstream>
 #include <vector>
 
+#define BUFFER_SIZE 32768 // 32Kbytes
+
 class HTTPReq {
 public:
   int port;
@@ -21,15 +23,71 @@ public:
   char method[20];
 
   void setURL(char* url){
+      memset(object, '\0', sizeof(object));
       sscanf(url, "%*[^//]//%[^:]:%d/%s", hostname, &port, object);
+
+      if(object[0] == '\0' || object[0] == '/')
+         strcpy(object, "index.html");
+
+      //std::cout << "hostname: " << hostname << std::endl;
+      //std::cout << "port: "     << port     << std::endl;
+      //std::cout << "object: "   << object   << std::endl;
   };
 
-  void setMethod(char* m) {
+  void setMethod(const char* m) {
     strcpy(method, m);
   }
 
   std::string buildRequest() {
     return std::string(method).append(" /").append(object).append(" HTTP/1.0");
+  }
+
+  int getResponseStatus(char* buf){
+    int responseStatus;
+    sscanf(buf, "HTTP/1.0 %d%*s", &responseStatus);
+    return responseStatus;
+  }
+
+  int getContentLenght(char* buf){
+    int aux, contentLenght;
+    sscanf(buf, "HTTP/1.0 %d%*[^Content-Lenght:]Content-Lenght: %d%*s", &aux, &contentLenght);
+    std::cout << "Content-Lenght: " << contentLenght << std::endl;
+    return contentLenght;
+  }
+
+  const char* getObject(){
+    if(object[0] == '\0' || object[0] == '/')
+         return "index.html";
+
+    return object;
+  }
+
+  void handle(char* buf2, char* buf, int &received){
+    int position = 0;
+    int notfound = 1;
+    for(int i = 0; i < BUFFER_SIZE - 1 && notfound; ++i) {
+      if (buf[i] == '\r'){
+        ++i;
+        if(i < BUFFER_SIZE - 1 && buf[i] == '\n'){
+          ++i;
+          if(i < BUFFER_SIZE - 1 && buf[i] == '\r'){
+            ++i;
+            if(i < BUFFER_SIZE - 1 && buf[i] == '\n'){
+              notfound = 0;
+              position = i + 1;
+            }
+          }
+        }
+      }
+    }
+    //std::cout << "start of data: " << position << std::endl;
+    memset(buf2, '\0', sizeof(buf2));
+    for (int i = position; i < received; ++i){
+      buf2[i-position] = buf[i];
+    }
+
+    received -= position;
+
   }
 
 };
@@ -44,7 +102,6 @@ int main(int argc, char *argv[]) {
 
     // cria o socket TCP IP
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    
 
     // =====================================================================================
     struct addrinfo hints;
@@ -77,7 +134,6 @@ int main(int argc, char *argv[]) {
     struct sockaddr_in serverAddr;
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_port = htons(request.port);     // short, network byte order
-    //std::cout << request.hostname;
     serverAddr.sin_addr.s_addr = inet_addr(ipstr);
     memset(serverAddr.sin_zero, '\0', sizeof(serverAddr.sin_zero));
 
@@ -96,16 +152,14 @@ int main(int argc, char *argv[]) {
       return 3;
     }
 
-    // trecho de código para leitura e envio de dados nessa conexao
-    // buffer eh o buffer de dados a ser recebido no socket com 100 bytes
-    char buf[1050] = {0};
-    std::stringstream ss;
-    unsigned char header[2000] = {0};
+    char buf[BUFFER_SIZE] = {0};
+    char buf2[BUFFER_SIZE] = {0};
 
-    // envia a msg
+    // send request
     request.setMethod("GET");
     std::string input = request.buildRequest();
-    std::cout << "sendin: " + input << std::endl;
+    std::cout << "sending: " << std::endl;
+    std::cout << input << std::endl;
     if (send(sockfd, input.c_str(), input.size(), 0) == -1) {
       perror("send");
       return 4;
@@ -114,69 +168,47 @@ int main(int argc, char *argv[]) {
     // zera o buffer
     memset(buf, '\0', sizeof(buf));
 
-    // recebe no buffer uma certa quantidade de bytes
-    if (recv(sockfd, buf, 1024, 0) == -1) {
+    // recebe no buffer uma certa quantidade de bytes BUFFER_SIZE
+    int received = recv(sockfd, buf, BUFFER_SIZE, 0);
+    if (received == -1) {
       perror("recv");
       return 5;
     }
 
-    ss << buf;
-    int responseStatus = 0;
-
-    sscanf(buf, "HTTP/1.0 %d%*s", &responseStatus);
-    std::cout << "status: " << responseStatus << std::endl;
-
+    int responseStatus = request.getResponseStatus(buf);
     switch (responseStatus)
     {
     case 200:
     {
-      int conntentLenght = 0;
+      int conntentLenght = request.getContentLenght(buf);
 
-      //tamanho
-      sscanf(buf, "HTTP/1.0 %d%*[^Content-Lenght:]Content-Lenght: %d%*s", &responseStatus, &conntentLenght);
-      std::cout << "conntentLenght: " << conntentLenght << std::endl;
-
-      std::string st = ss.str();
-      std::string rest = st.substr(st.find("\r\n\r\n") + 4, st.size());
-      //std::string rest = st.substr(st.find("\n\n") + 2, st.size());
-      std::cout << "st: " << st << std::endl;
-      std::cout << "opa: " << rest.size() << std::endl;
-      int received = rest.size();
-      std::cout << "opa: " << received << std::endl;
-      std::vector<uint8_t> data(rest.begin(), rest.end());
-      
-
-      FILE * pFile;
-      pFile = fopen ("myfile","w+");
-      fwrite(&data[0], sizeof(data[0]), data.size(), pFile);
-
+      // open file
       std::ofstream outfile;
-      outfile.open("afile");
-      outfile << rest;
+      outfile.open(request.getObject(), std::ios_base::out | std::ios_base::binary);
 
+      // handle first part of request.
+      request.handle(buf2, buf, received);
+
+      // write on file
+      outfile.write(buf2, received);
+
+      //std::cout << "\nReceived: (" << received << "/" << conntentLenght << ")" << std::endl; 
       while(received < conntentLenght){
           // zera o buffer
-          memset(buf, '\0', sizeof(buf));
-          ss.str("");
+          memset(buf2, '\0', sizeof(buf2));
 
-          // recebe no buffer uma certa quantidade de bytes ate 1024
-          if (recv(sockfd, buf, 1024, 0) == -1) {
+          // recebe no buffer uma certa quantidade de bytes ate BUFFER_SIZE
+          int r = recv(sockfd, buf2, BUFFER_SIZE, 0);
+          if (r == -1) {
             perror("recv");
             return 5;
           }
-          ss << buf;
-          rest = ss.str();
-          data = std::vector<uint8_t> (rest.begin(), rest.end());
-          //std::cout << "\nRecebido: \n" << rest << "\n ";
-          std::cout << "\nsizerest: " << rest.size()*2; 
-          //received += ss.tellg();
-          received += rest.size();
-          fwrite(&data[0], sizeof(data[0]), data.size(), pFile);
-          outfile << buf;
-          std::cout << "\nReceived until now: " << received; 
+          received += r;
+          outfile.write(buf2, r);
+          //std::cout << "\nReceived: (" << received << "/" << conntentLenght << ")"; 
       }
-        outfile.close();
-        fclose (pFile);
+      // close file
+      outfile.close();
       break;
     }
     default:
