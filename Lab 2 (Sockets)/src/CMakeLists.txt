@@ -1,9 +1,8 @@
-add_library (MultithreadedServer 
-                MultithreadedServer.cpp 
-                MultithreadedServer.hpp)
+# adding /Lib
+add_subdirectory(Lib)
 
-add_library(dnsresolver dnsresolver.cpp)
+# adding /Server
+add_subdirectory(Server)
 
-add_executable (web-server web-server.cpp)
-
-target_link_libraries (web-server MultithreadedServer)
+# adding /Client
+# add_subdirectory(Client)
