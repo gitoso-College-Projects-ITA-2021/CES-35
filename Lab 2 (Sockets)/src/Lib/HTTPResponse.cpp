@@ -1,5 +1,6 @@
 #include "./HTTPResponse.hpp"
 
+#include <iostream>
 #include <sstream>
 
 HTTP::StatusCode HTTP::Response::getStatusCode() { return this->statusCode; };
@@ -23,8 +24,8 @@ void HTTP::Response::decode(std::string& payload) {
       size = std::snprintf(nullptr, 0, format, this->statusCode, "OK",
                            this->contentLength);
       payload.resize(size + 1);
-      std::snprintf(&payload[0], payload.size(), format, this->statusCode,
-                    "OK");
+      std::snprintf(&payload[0], payload.size(), format, this->statusCode, "OK",
+                    this->contentLength);
       break;
 
     case HTTP::BadRequest:

@@ -30,9 +30,9 @@ int HTTPRequest::getResponseStatus(char* buf) {
 
 int HTTPRequest::getContentLenght(char* buf) {
   int aux, contentLenght = INT32_MAX;
-  sscanf(buf, "HTTP/1.0 %d%*[^Content-Lenght:]Content-Lenght: %d%*s", &aux,
+  sscanf(buf, "HTTP/1.0 %d%*[^Content-Length:]Content-Length: %d%*s", &aux,
          &contentLenght);
-  std::cout << "Content-Lenght: " << contentLenght << std::endl;
+  // std::cout << "Content-Length: " << contentLenght << std::endl;
   return contentLenght;
 }
 
