@@ -5,4 +5,4 @@ add_subdirectory(Lib)
 add_subdirectory(Server)
 
 # adding /Client
-# add_subdirectory(Client)
+add_subdirectory(Client)
