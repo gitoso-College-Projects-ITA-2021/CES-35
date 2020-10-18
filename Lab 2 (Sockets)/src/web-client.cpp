@@ -26,9 +26,6 @@ public:
       memset(object, '\0', sizeof(object));
       sscanf(url, "%*[^//]//%[^:]:%d/%s", hostname, &port, object);
 
-      if(object[0] == '\0' || object[0] == '/')
-         strcpy(object, "index.html");
-
       //std::cout << "hostname: " << hostname << std::endl;
       //std::cout << "port: "     << port     << std::endl;
       //std::cout << "object: "   << object   << std::endl;
@@ -39,18 +36,19 @@ public:
   }
 
   std::string buildRequest() {
-    return std::string(method).append(" /").append(object).append(" HTTP/1.0");
+    return std::string(method).append(" /").append(object).append(" HTTP/1.0").append("\r\n\r\n");
   }
 
   int getResponseStatus(char* buf){
     int responseStatus;
     sscanf(buf, "HTTP/1.0 %d%*s", &responseStatus);
+    //sscanf(buf, "%*[^ ] %d%*s", &responseStatus);
     return responseStatus;
   }
 
   int getContentLenght(char* buf){
-    int aux, contentLenght;
-    sscanf(buf, "HTTP/1.0 %d%*[^Content-Lenght:]Content-Lenght: %d%*s", &aux, &contentLenght);
+    int contentLenght = INT32_MAX;
+    sscanf(buf, "%*[^Content-Lenght:]Content-Lenght: %d%*s", &contentLenght);
     std::cout << "Content-Lenght: " << contentLenght << std::endl;
     return contentLenght;
   }
@@ -58,6 +56,14 @@ public:
   const char* getObject(){
     if(object[0] == '\0' || object[0] == '/')
          return "index.html";
+    
+    int i = 0;
+    while(i < 200 && object[i] != '\0'){
+      ++i;
+    }
+    if (i > 0 && object[i-1] == '/'){
+      return "index.html";
+    }
 
     return object;
   }
@@ -202,6 +208,9 @@ int main(int argc, char *argv[]) {
           if (r == -1) {
             perror("recv");
             return 5;
+          }
+          if (r == 0) {
+            break;
           }
           received += r;
           outfile.write(buf2, r);
