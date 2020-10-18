@@ -8,6 +8,10 @@ void HTTP::Response::setStatusCode(StatusCode status) {
   this->statusCode = status;
 }
 
+void HTTP::Response::setContentLength(int contentLength) {
+  this->contentLength = contentLength;
+}
+
 void HTTP::Response::decode(std::string& payload) {
   // formato da resposta HTTP
   const char* format = "HTTP/1.0 %d %s\r\n\r\n";
@@ -15,7 +19,9 @@ void HTTP::Response::decode(std::string& payload) {
   int size = 0;
   switch (this->statusCode) {
     case HTTP::OK:
-      size = std::snprintf(nullptr, 0, format, this->statusCode, "OK");
+      format = "HTTP/1.0 %d %s\r\nContent-Lenght: %d\r\n\r\n";
+      size = std::snprintf(nullptr, 0, format, this->statusCode, "OK",
+                           this->contentLength);
       payload.resize(size + 1);
       std::snprintf(&payload[0], payload.size(), format, this->statusCode,
                     "OK");

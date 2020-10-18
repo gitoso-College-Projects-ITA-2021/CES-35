@@ -167,6 +167,7 @@ void MultithreadedServer::ServerJob(int jobId, int clientSockfd) {
   } else {
     char response_buf[BUFFER_SIZE] = {'\0'};
     int fileLen = file_size(localFile);
+    response.setContentLength(fileLen);
 
     // Preenchendo com o header
     int headerLen = header.copy(response_buf, BUFFER_SIZE, 0) - 1;

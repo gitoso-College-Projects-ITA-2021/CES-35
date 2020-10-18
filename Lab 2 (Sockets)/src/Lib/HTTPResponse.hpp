@@ -10,6 +10,7 @@ class Response {
  public:
   StatusCode getStatusCode(void);
   void setStatusCode(StatusCode);
+  void setContentLength(int);
   void decode(std::string&);
 
  private:
