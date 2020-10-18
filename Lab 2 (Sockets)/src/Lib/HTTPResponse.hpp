@@ -1,14 +1,19 @@
 #include <cstdint>
+#include <memory>
+#include <string>
 #include <vector>
 
+namespace HTTP {
 enum StatusCode { OK = 200, BadRequest = 400, NotFound = 404 };
 
-class HTTPResponse {
+class Response {
  public:
-  void setStatusCode(int);
-  std::vector<uint8_t>& decode(void);
+  StatusCode getStatusCode(void);
+  void setStatusCode(StatusCode);
+  void decode(std::string&);
 
  private:
-  int statusCode;
+  StatusCode statusCode;
   int contentLength;
 };
+}  // namespace HTTP
