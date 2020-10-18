@@ -32,14 +32,14 @@ void HTTP::Response::decode(std::string& payload) {
       size = std::snprintf(nullptr, 0, format, this->statusCode, "Bad Request");
       payload.resize(size + 1);
       std::snprintf(&payload[0], payload.size(), format, this->statusCode,
-                    "OK");
+                    "Bad Request");
       break;
 
     case HTTP::NotFound:
       size = std::snprintf(nullptr, 0, format, this->statusCode, "Not Found");
       payload.resize(size + 1);
       std::snprintf(&payload[0], payload.size(), format, this->statusCode,
-                    "OK");
+                    "Not Found");
       break;
   }
 }
