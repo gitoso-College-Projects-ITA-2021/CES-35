@@ -1,14 +1,15 @@
-#include <cstdint>
-#include <string>
-#include <string.h>
 #include <stdio.h>
-#include <vector>
+#include <string.h>
+
+#include <cstdint>
 #include <iostream>
+#include <string>
+#include <vector>
 
 #define BUFFER_SIZE 32768  // 32Kbytes
 
 class HTTPRequest {
-public:
+ public:
   int port;
   char hostname[200];
   char object[200];
@@ -20,6 +21,5 @@ public:
   int getResponseStatus(char* buf);
   int getContentLenght(char* buf);
   const char* getObject();
-  void handle(char* buf2, char* buf, int &received);
-
+  void handle(char* buf2, char* buf, int& received);
 };
