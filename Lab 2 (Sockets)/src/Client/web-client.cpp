@@ -127,6 +127,9 @@ int main(int argc, char *argv[]) {
                     perror("recv");
                     return 5;
                 }
+                if (r == 0) {
+                  break;
+                }
                 received += r;
                 outfile.write(buf2, r);
                 //std::cout << "\nReceived: (" << received << "/" << conntentLenght << ")"; 

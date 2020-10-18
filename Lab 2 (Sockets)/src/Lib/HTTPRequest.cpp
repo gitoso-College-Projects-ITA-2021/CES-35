@@ -11,24 +11,25 @@ void HTTPRequest::setURL(char* url){
       //std::cout << "hostname: " << hostname << std::endl;
       //std::cout << "port: "     << port     << std::endl;
       //std::cout << "object: "   << object   << std::endl;
-  };
+  }
 
 void HTTPRequest::setMethod(const char* m) {
     strcpy(method, m);
   }
 
  std::string HTTPRequest::buildRequest() {
-    return std::string(method).append(" /").append(object).append(" HTTP/1.0");
+    return std::string(method).append(" /").append(object).append(" HTTP/1.0").append("\r\n\r\n");
   }
 
 int HTTPRequest::getResponseStatus(char* buf){
     int responseStatus;
     sscanf(buf, "HTTP/1.0 %d%*s", &responseStatus);
+    //sscanf(buf, "%*[^ ] %d%*s", &responseStatus);
     return responseStatus;
   }
 
 int HTTPRequest::getContentLenght(char* buf){
-    int aux, contentLenght;
+    int aux, contentLenght = INT32_MAX;
     sscanf(buf, "HTTP/1.0 %d%*[^Content-Lenght:]Content-Lenght: %d%*s", &aux, &contentLenght);
     std::cout << "Content-Lenght: " << contentLenght << std::endl;
     return contentLenght;
@@ -37,6 +38,14 @@ int HTTPRequest::getContentLenght(char* buf){
 const char* HTTPRequest::getObject(){
     if(object[0] == '\0' || object[0] == '/')
          return "index.html";
+    
+    int i = 0;
+    while(i < 200 && object[i] != '\0'){
+      ++i;
+    }
+    if (i > 0 && object[i-1] == '/'){
+      return "index.html";
+    }
 
     return object;
   }
