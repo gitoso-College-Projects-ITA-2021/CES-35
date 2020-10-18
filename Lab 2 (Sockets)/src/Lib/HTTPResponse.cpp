@@ -19,7 +19,7 @@ void HTTP::Response::decode(std::string& payload) {
   int size = 0;
   switch (this->statusCode) {
     case HTTP::OK:
-      format = "HTTP/1.0 %d %s\r\nContent-Lenght: %d\r\n\r\n";
+      format = "HTTP/1.0 %d %s\r\nContent-Length: %d\r\n\r\n";
       size = std::snprintf(nullptr, 0, format, this->statusCode, "OK",
                            this->contentLength);
       payload.resize(size + 1);

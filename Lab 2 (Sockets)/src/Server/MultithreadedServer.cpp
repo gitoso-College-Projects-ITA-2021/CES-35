@@ -7,6 +7,10 @@
 int file_size(std::ifstream& file) {
   int length = -1;
 
+  if (!file.good()) {
+    return -1;
+  }
+
   file.seekg(0, file.end);
   length = file.tellg();
   file.seekg(0, file.beg);
@@ -156,6 +160,8 @@ void MultithreadedServer::ServerJob(int jobId, int clientSockfd) {
 
   // response's header
   std::string header;
+  int fileLen = file_size(localFile);
+  response.setContentLength(fileLen);
   response.decode(header);
 
   if (response.getStatusCode() != HTTP::OK) {
@@ -166,8 +172,6 @@ void MultithreadedServer::ServerJob(int jobId, int clientSockfd) {
     }
   } else {
     char response_buf[BUFFER_SIZE] = {'\0'};
-    int fileLen = file_size(localFile);
-    response.setContentLength(fileLen);
 
     // Preenchendo com o header
     int headerLen = header.copy(response_buf, BUFFER_SIZE, 0) - 1;
