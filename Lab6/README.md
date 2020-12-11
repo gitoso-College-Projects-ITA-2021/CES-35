@@ -32,7 +32,22 @@ Para cada sessão do relatórios, será inserida uma captura de tela referente i
 
 
 <!-- vscode-markdown-toc -->
-**COLOCAR TOC AQUI**
+
+* [Tabela de Conteúdos](#TabeladeContedos)
+* [2.1 - Primeiros passos com Mininet-WiFi](#PrimeirospassoscomMininet-WiFi)
+* [2.2 - Customizando topologias](#Customizandotopologias)
+* [2.3 - Acessando informações dos nós](#Acessandoinformaesdosns)
+* [2.4 - OVSAP versus UserAP](#OVSAPversusUserAP)
+* [2.5 - Utilizando interfaces gráficas](#Utilizandointerfacesgrficas)
+	* [2.5.1 - Visual Network Descriptor](#VisualNetworkDescriptor)
+	* [2.5.2 - MiniEdit](#MiniEdit)
+	* [2.5.3 - Visualizando gráficos 2D e 3D](#Visualizandogrficos2De3D)
+* [2.6 - Emulação do meio sem fio](#Emulaodomeiosemfio)
+	* [2.6.1 - TC (Traffic Control)](#TCTrafficControl)
+	* [2.6.2 - Wmediumd](#Wmediumd)
+	* [2.6.3 - TC versus Wmediumd na prática](#TCversusWmediumdnaprtica)
+* [2.7 - Modelos de propagação](#Modelosdepropagao)
+	* [2.7.1 - Provendo mais realismo](#Provendomaisrealismo)
 
 <!-- vscode-markdown-toc-config
 	numbering=false
@@ -60,7 +75,7 @@ $ sudo util/install.sh -Wlnfv
 
 # 2 - Iniciante
 
-## 2.1 - Primeiros passos com Mininet-WiFi
+## <a name='PrimeirospassoscomMininet-WiFi'></a>2.1 - Primeiros passos com Mininet-WiFi
 
 ---
 **Screenshots:**
@@ -78,7 +93,7 @@ $ sudo util/install.sh -Wlnfv
 ![](imagens/2112.png)
 ![](imagens/2113.png)
 
-## 2.2 - Customizando topologias
+## <a name='Customizandotopologias'></a>2.2 - Customizando topologias
 
 ---
 **Screenshots:**
@@ -86,7 +101,7 @@ $ sudo util/install.sh -Wlnfv
 ![](imagens/222.png)
 ![](imagens/223.png)
 
-## 2.3 - Acessando informações dos nós
+## <a name='Acessandoinformaesdosns'></a>2.3 - Acessando informações dos nós
 
 ---
 **Screenshots:**
@@ -97,7 +112,7 @@ $ sudo util/install.sh -Wlnfv
 ![](imagens/235.png)
 ![](imagens/236.png)
 
-## 2.4 - OVSAP versus UserAP
+## <a name='OVSAPversusUserAP'></a>2.4 - OVSAP versus UserAP
 
 ---
 **Screenshots:**
@@ -108,9 +123,9 @@ $ sudo util/install.sh -Wlnfv
 ![](imagens/245.png)
 ![](imagens/246.png)
 
-## 2.5 - Utilizando interfaces gráficas
+## <a name='Utilizandointerfacesgrficas'></a>2.5 - Utilizando interfaces gráficas
 
-### 2.5.1 - Visual Network Descriptor
+### <a name='VisualNetworkDescriptor'></a>2.5.1 - Visual Network Descriptor
 
 A instalação do VND envolveu os seguintes passos adicionais:
 
@@ -128,7 +143,7 @@ Adicionalmente foi necessário instalar o Adobe Flash Player
 ![](imagens/2511.png)
 ![](imagens/2512.png)
 
-### 2.5.2 - MiniEdit
+### <a name='MiniEdit'></a>2.5.2 - MiniEdit
 
 ---
 **Screenshots:**
@@ -136,26 +151,26 @@ Adicionalmente foi necessário instalar o Adobe Flash Player
 ![](imagens/2522.png)
 
 
-### 2.5.3 - Visualizando gráficos 2D e 3D
+### <a name='Visualizandogrficos2De3D'></a>2.5.3 - Visualizando gráficos 2D e 3D
 
 ---
 **Screenshots:**
 ![](imagens/2532.png)
 ![](imagens/2531.png)
 
-## 2.6 - Emulação do meio sem fio
+## <a name='Emulaodomeiosemfio'></a>2.6 - Emulação do meio sem fio
 
-### 2.6.1 - TC (Traffic Control)
+### <a name='TCTrafficControl'></a>2.6.1 - TC (Traffic Control)
 
 ---
 **Screenshots:**
 ![](imagens/2611.png)
 
-### 2.6.2 - Wmediumd
+### <a name='Wmediumd'></a>2.6.2 - Wmediumd
 
 (Só teoria)
 
-### 2.6.3 - TC versus Wmediumd na prática
+### <a name='TCversusWmediumdnaprtica'></a>2.6.3 - TC versus Wmediumd na prática
 
 ---
 **Screenshots:**
@@ -166,7 +181,7 @@ Adicionalmente foi necessário instalar o Adobe Flash Player
 ![](imagens/2635.png)
 ![](imagens/2636.png)
 
-## 2.7 - Modelos de propagação
+## <a name='Modelosdepropagao'></a>2.7 - Modelos de propagação
 
 ---
 **Screenshots:**
@@ -175,12 +190,6 @@ Adicionalmente foi necessário instalar o Adobe Flash Player
 ![](imagens/273.png)
 ![](imagens/274.png)
 
-### 2.7.1 - Provendo mais realismo
+### <a name='Provendomaisrealismo'></a>2.7.1 - Provendo mais realismo
 
-ESTOU TENDO PANE AQUI, VOLTAR DEPOIS
-
-## 2.8 - Relação distância versus sinal recebido
-
----
-**Screenshots:**
-![](imagens/281.png)
+Bem, aqui tive um problema e deixei o laboratório de lado. Depois a atividade acabou ficando opcional e por estar sobrecarregado com demandas optei por não continuar. De qualquer forma, para não desperdiçar o trabalho parcial que já havia realizado, optei por realizar uma entrega incompleta mesmo.
